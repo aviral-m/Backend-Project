@@ -2,7 +2,7 @@
   "name": "backend-project",
   "version": "1.0.0",
   "description": "Backend Project for Github",
-  "type" : "module",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -13,7 +13,8 @@
   ],
   "author": "Aviral Mehrotra",
   "license": "ISC",
-  "devDependencies" : {
-    "nodemon" : "^3.0.1"
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "prettier": "^3.3.3"
   }
 }
