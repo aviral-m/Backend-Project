@@ -4,6 +4,7 @@ import {User} from "../models/user.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken"
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshTokens = async(userId) =>{
     try {
@@ -388,6 +389,62 @@ const getUserChannelProfile = asyncHandler(async (req,res) =>{
     ))
 })
 
+const getWatchHistory = asyncHandler(async (req,res) =>{
+    const user = await User.aggregate([
+        {
+            $match : {
+                // _id : req.user._id doesn't work here, it only works outside the aggregate function.
+                // Usually mongoose automatically converts this user id to an ObjectId - which is the format in which 
+                // it is stored in the MongoDB database. 
+                // But, in aggregate functions, mongoose can't do its tricks, hence user needs to manually do so.
+                _id : ObjectId.createFromHexString(req.user._id) 
+            }
+        },
+        {
+            $lookup : {
+                from : "videos",
+                localField : "watchHistory",
+                foreignField : "_id",
+                as : "watchHistory",
+                pipeline : [
+                    {
+                        $lookup : {
+                            from : "users",
+                            localField : "owner",
+                            foreignField : "_id",
+                            as : "owner",
+                            pipeline : [
+                                {
+                                    $project : {
+                                        username : 1,
+                                        fullName : 1,
+                                        avatar : 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    // Below code takes the first field from the owner array, which is an object,
+                    // and overwrites the owner field with it, because we want the object from array[object]
+                    {
+                        $addFields : {
+                            owner : {
+                                $first : "$owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+
+    return res.status(200)
+    .json(new ApiResponse(
+        200,
+        user[0].watchHistory,
+        "Successfully fetched watch history"
+    ))
+})
 export {
     registerUser,
     loginUser,
@@ -399,4 +456,5 @@ export {
     updateUserAvatar,
     updateUserCoverImage,
     getUserChannelProfile,
+    getWatchHistory,
 }   
